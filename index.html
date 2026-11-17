@@ -1,0 +1,1733 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>奶龍歡樂遊樂園 - Nailong Happy Playground</title>
+    <!-- 引入 Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 引入 Google Fonts 圓體字型，營造可愛卡通感 -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@500;700;900&family=Fredoka:wght@600;700&display=swap" rel="stylesheet">
+    <!-- 引入 FontAwesome 圖示 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- 引入 Canvas Confetti 慶祝紙花特效 -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+    <style>
+        /* 自訂主題色彩與字體設定 */
+        :root {
+            --cream-yellow: #FFF8D6;
+            --nailong-yellow: #FFD23F;
+            --nailong-orange: #FF8C42;
+            --sky-blue: #70D6FF;
+            --sweet-pink: #FF70A6;
+            --soft-white: #FFFFFF;
+        }
+
+        body {
+            font-family: 'Fredoka', 'Noto Sans TC', sans-serif;
+            background: linear-gradient(180deg, #A2E4FF 0%, #E0F7FF 50%, #FFF8D6 100%);
+            min-height: 100vh;
+            overflow-x: hidden;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        /* 背景漂浮動畫 */
+        @keyframes floatSlow {
+            0%, 100% { transform: translateY(0px) translateX(0px); }
+            50% { transform: translateY(-15px) translateX(10px); }
+        }
+        @keyframes floatReverse {
+            0%, 100% { transform: translateY(0px) translateX(0px); }
+            50% { transform: translateY(12px) translateX(-12px); }
+        }
+        @keyframes spinSlow {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        @keyframes bounceCute {
+            0%, 100% { transform: scale(1, 1) translateY(0); }
+            30% { transform: scale(1.1, 0.9) translateY(5px); }
+            50% { transform: scale(0.95, 1.08) translateY(-25px); }
+            75% { transform: scale(1.03, 0.97) translateY(0); }
+        }
+        @keyframes wiggle {
+            0%, 100% { transform: rotate(-4deg); }
+            50% { transform: rotate(4deg); }
+        }
+
+        .animate-float { animation: floatSlow 6s ease-in-out infinite; }
+        .animate-float-rev { animation: floatReverse 7s ease-in-out infinite; }
+        .animate-spin-slow { animation: spinSlow 20s linear infinite; }
+        .animate-jump-cute { animation: bounceCute 0.6s ease; }
+        .animate-wiggle { animation: wiggle 2s ease-in-out infinite; }
+
+        /* 卡通立體按鈕樣式 */
+        .btn-cartoon {
+            border: 4px solid #5A3A22;
+            box-shadow: 0 6px 0 #5A3A22;
+            transition: all 0.1s ease;
+        }
+        .btn-cartoon:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 0 #5A3A22;
+        }
+        .btn-cartoon:active {
+            transform: translateY(4px);
+            box-shadow: 0 2px 0 #5A3A22;
+        }
+
+        /* 卡通卡片外框 */
+        .card-cartoon {
+            background: rgba(255, 255, 255, 0.92);
+            border: 4px solid #5A3A22;
+            box-shadow: 0 8px 0 rgba(90, 58, 34, 0.25);
+            border-radius: 28px;
+        }
+
+        /* 翻牌遊戲 3D 翻轉特效 */
+        .perspective-1000 { perspective: 1000px; }
+        .transform-style-3d { transform-style: preserve-3d; transition: transform 0.5s cubic-bezier(0.4, 0.2, 0.2, 1); }
+        .backface-hidden { backface-visibility: hidden; }
+        .rotate-y-180 { transform: rotateY(180deg); }
+
+        /* 遊戲畫布自適應容器 */
+        .game-canvas-wrapper {
+            position: relative;
+            width: 100%;
+            border: 4px solid #5A3A22;
+            border-radius: 24px;
+            overflow: hidden;
+            background: #FFFDF5;
+            box-shadow: inset 0 4px 12px rgba(0,0,0,0.08);
+        }
+
+        /* 餵食遊戲食物拖曳效果 */
+        .food-item {
+            touch-action: none;
+            cursor: grab;
+            transition: transform 0.2s;
+        }
+        .food-item:active {
+            cursor: grabbing;
+            transform: scale(1.2);
+        }
+
+        /* 隱藏捲軸 */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #FFF8D6; }
+        ::-webkit-scrollbar-thumb { background: #FFD23F; border-radius: 10px; border: 2px solid #5A3A22; }
+    </style>
+</head>
+<body class="text-[#5A3A22] relative">
+
+    <!-- ================= 背景裝飾元素 (雲朵、星星、彩虹、愛心) ================= -->
+    <div class="fixed inset-0 pointer-events-none overflow-hidden z-0">
+        <!-- 彩虹 SVG -->
+        <svg class="absolute -top-10 -left-16 w-72 h-72 opacity-60 animate-float" viewBox="0 0 200 200">
+            <path d="M20,180 A140,140 0 0,1 180,20" fill="none" stroke="#FF70A6" stroke-width="14" stroke-linecap="round"/>
+            <path d="M36,180 A124,124 0 0,1 180,36" fill="none" stroke="#FFD23F" stroke-width="14" stroke-linecap="round"/>
+            <path d="M52,180 A108,108 0 0,1 180,52" fill="none" stroke="#70D6FF" stroke-width="14" stroke-linecap="round"/>
+        </svg>
+
+        <!-- 雲朵們 -->
+        <div class="absolute top-16 right-10 text-white opacity-90 animate-float-rev">
+            <i class="fas fa-cloud text-7xl drop-shadow-md"></i>
+        </div>
+        <div class="absolute top-1/3 left-6 text-white opacity-80 animate-float">
+            <i class="fas fa-cloud text-6xl drop-shadow-md"></i>
+        </div>
+        <div class="absolute bottom-24 right-12 text-white opacity-85 animate-float">
+            <i class="fas fa-cloud text-8xl drop-shadow-md"></i>
+        </div>
+
+        <!-- 星星與愛心 -->
+        <div class="absolute top-28 left-1/4 text-[#FFD23F] text-3xl animate-spin-slow">★</div>
+        <div class="absolute top-1/2 right-1/4 text-[#FF70A6] text-3xl animate-bounce">♥</div>
+        <div class="absolute bottom-32 left-1/3 text-[#FF8C42] text-2xl animate-pulse">✦</div>
+        <div class="absolute top-20 right-1/3 text-[#FF70A6] text-2xl animate-float">♥</div>
+    </div>
+
+    <!-- ================= 頂部導覽列與音效/紀錄控制 ================= -->
+    <header class="relative z-20 max-w-6xl mx-auto px-4 pt-4 pb-2 flex flex-wrap items-center justify-between gap-3">
+        <!-- 網站 Logo 標題 -->
+        <button onclick="navigateTo('home')" class="flex items-center gap-3 bg-[#FFD23F] px-4 py-2 rounded-full btn-cartoon cursor-pointer">
+            <span class="text-2xl sm:text-3xl">🦖</span>
+            <span class="font-black text-lg sm:text-2xl tracking-wide text-[#5A3A22]">奶龍歡樂遊樂園</span>
+        </button>
+
+        <!-- 控制按鈕群：首頁、紀錄、音效、音樂 -->
+        <div class="flex items-center gap-2 sm:gap-3">
+            <button onclick="navigateTo('home')" class="bg-white hover:bg-[#FFF8D6] px-3 py-2 rounded-2xl btn-cartoon font-bold text-sm sm:text-base flex items-center gap-1">
+                <i class="fas fa-home text-[#FF8C42]"></i>
+                <span class="hidden sm:inline">遊樂園大廳</span>
+            </button>
+
+            <button onclick="toggleRecordsModal(true)" class="bg-[#FF70A6] text-white px-3 py-2 rounded-2xl btn-cartoon font-bold text-sm sm:text-base flex items-center gap-1">
+                <i class="fas fa-trophy text-[#FFD23F]"></i>
+                <span class="hidden sm:inline">分數紀錄</span>
+            </button>
+
+            <!-- 音效開關 -->
+            <button id="btn-sfx" onclick="SoundSystem.toggleSFX()" class="bg-[#70D6FF] text-[#5A3A22] px-3 py-2 rounded-2xl btn-cartoon font-bold text-sm sm:text-base" title="切換遊戲音效">
+                <i id="icon-sfx" class="fas fa-volume-up"></i>
+                <span class="hidden md:inline ml-1">音效:開</span>
+            </button>
+
+            <!-- 背景音樂開關 -->
+            <button id="btn-bgm" onclick="SoundSystem.toggleBGM()" class="bg-[#FFD23F] text-[#5A3A22] px-3 py-2 rounded-2xl btn-cartoon font-bold text-sm sm:text-base" title="切換背景音樂">
+                <i id="icon-bgm" class="fas fa-music"></i>
+                <span id="text-bgm" class="hidden md:inline ml-1">音樂:關</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- ================= 主內容區域 ================= -->
+    <main class="relative z-10 max-w-6xl mx-auto px-4 py-4 pb-16">
+
+        <!-- ==================== 1. 首頁視圖 (HOME VIEW) ==================== -->
+        <section id="view-home" class="space-y-8">
+            <!-- 歡迎橫幅與互動奶龍主舞台 -->
+            <div class="card-cartoon p-6 sm:p-10 text-center relative overflow-hidden bg-gradient-to-b from-[#FFFDF7] to-[#FFF4C2]">
+                <div class="inline-block bg-[#FF8C42] text-white font-bold px-4 py-1 rounded-full text-sm mb-3 border-2 border-[#5A3A22]">
+                    ✨ 歡迎來到最療癒的黃色小恐龍世界 ✨
+                </div>
+                <h1 class="text-3xl sm:text-5xl font-black text-[#5A3A22] mb-2 tracking-wider drop-shadow-sm">
+                    奶龍歡樂遊樂園
+                </h1>
+                <p class="text-base sm:text-lg font-bold text-[#8C6239] max-w-xl mx-auto mb-6">
+                    移動滑鼠看看奶龍可愛的眼神追蹤，點擊奶龍還會跳躍跟賣萌喔！快來挑戰四大互動遊戲吧！
+                </p>
+
+                <!-- 中央大型互動奶龍角色區 -->
+                <div class="relative flex flex-col items-center justify-center my-4">
+                    <!-- 對話氣泡 -->
+                    <div id="nailong-speech" class="bg-white border-3 border-[#5A3A22] px-5 py-2 rounded-2xl font-bold text-[#5A3A22] shadow-md mb-3 transition-all duration-300 transform scale-100">
+                        你好呀！我是奶龍，點我或跟我一起玩吧！💛
+                    </div>
+
+                    <!-- 
+                        【圖片素材替換預留區】
+                        目前使用精心繪製的向量可愛黃色奶龍插畫 (SVG)，支援眼睛跟隨滑鼠與表情切換。
+                        若未來有專屬奶龍圖片，可將下方 <img id="custom-nailong-img"> 取消註解並填入 src，同時隱藏 #nailong-svg-mascot。
+                    -->
+                    <div id="mascot-container" onclick="interactWithMascot()" class="cursor-pointer select-none transition-transform duration-200 hover:scale-105 active:scale-95 relative w-56 h-56 sm:w-64 sm:h-64 flex items-center justify-center">
+                        <!-- 預留自訂圖片位置 -->
+                        <!-- <img id="custom-nailong-img" src="your-nailong-image.png" alt="奶龍" class="hidden w-full h-full object-contain"> -->
+
+                        <!-- 暫時可愛黃色恐龍(奶龍)動態向量插畫 -->
+                        <svg id="nailong-svg-mascot" viewBox="0 0 240 240" class="w-full h-full drop-shadow-xl">
+                            <!-- 尾巴 -->
+                            <path d="M55,175 Q20,165 25,140 Q45,150 65,155 Z" fill="#FFD23F" stroke="#5A3A22" stroke-width="5" stroke-linejoin="round"/>
+                            <!-- 背後小背鰭 -->
+                            <path d="M62,110 L45,118 L60,128 Z" fill="#FF8C42" stroke="#5A3A22" stroke-width="4" stroke-linejoin="round"/>
+                            <path d="M58,132 L42,140 L58,148 Z" fill="#FF8C42" stroke="#5A3A22" stroke-width="4" stroke-linejoin="round"/>
+
+                            <!-- 圓滾滾身體 -->
+                            <ellipse cx="120" cy="155" rx="62" ry="60" fill="#FFD23F" stroke="#5A3A22" stroke-width="5"/>
+                            <!-- 奶油色大肚肚 -->
+                            <ellipse cx="120" cy="162" rx="42" ry="44" fill="#FFF8D6"/>
+                            <!-- 肚肚上的可愛橫紋 -->
+                            <path d="M95,148 Q120,154 145,148" fill="none" stroke="#F0D890" stroke-width="3" stroke-linecap="round"/>
+                            <path d="M92,166 Q120,172 148,166" fill="none" stroke="#F0D890" stroke-width="3" stroke-linecap="round"/>
+                            <path d="M98,184 Q120,190 142,184" fill="none" stroke="#F0D890" stroke-width="3" stroke-linecap="round"/>
+
+                            <!-- 胖嘟嘟大頭 -->
+                            <ellipse cx="120" cy="85" rx="58" ry="52" fill="#FFD23F" stroke="#5A3A22" stroke-width="5"/>
+                            <!-- 頭頂可愛小呆毛/角 -->
+                            <path d="M110,35 Q120,15 130,35" fill="#FFD23F" stroke="#5A3A22" stroke-width="5" stroke-linecap="round"/>
+
+                            <!-- 可愛小手 (左手揮手、右手自然) -->
+                            <g id="mascot-left-arm">
+                                <ellipse cx="62" cy="145" rx="16" ry="12" transform="rotate(-25 62 145)" fill="#FFD23F" stroke="#5A3A22" stroke-width="5"/>
+                                <!-- 粉色肉球 -->
+                                <circle cx="55" cy="142" r="4" fill="#FF9EBB"/>
+                            </g>
+                            <ellipse cx="178" cy="148" rx="16" ry="12" transform="rotate(20 178 148)" fill="#FFD23F" stroke="#5A3A22" stroke-width="5"/>
+
+                            <!-- 小短腿 -->
+                            <ellipse cx="92" cy="212" rx="18" ry="12" fill="#FFD23F" stroke="#5A3A22" stroke-width="5"/>
+                            <ellipse cx="148" cy="212" rx="18" ry="12" fill="#FFD23F" stroke="#5A3A22" stroke-width="5"/>
+
+                            <!-- 腮紅 -->
+                            <ellipse cx="80" cy="96" rx="11" ry="7" fill="#FF70A6" opacity="0.65"/>
+                            <ellipse cx="160" cy="96" rx="11" ry="7" fill="#FF70A6" opacity="0.65"/>
+
+                            <!-- 眼睛群組 (正常狀態，會跟隨滑鼠) -->
+                            <g id="eyes-normal">
+                                <!-- 左眼 -->
+                                <circle cx="96" cy="78" r="13" fill="#FFFFFF" stroke="#5A3A22" stroke-width="4"/>
+                                <g id="pupil-left">
+                                    <circle cx="96" cy="78" r="7" fill="#2E7D32"/>
+                                    <circle cx="96" cy="78" r="4" fill="#1A1A1A"/>
+                                    <circle cx="93" cy="75" r="2.5" fill="#FFFFFF"/>
+                                </g>
+                                <!-- 右眼 -->
+                                <circle cx="144" cy="78" r="13" fill="#FFFFFF" stroke="#5A3A22" stroke-width="4"/>
+                                <g id="pupil-right">
+                                    <circle cx="144" cy="78" r="7" fill="#2E7D32"/>
+                                    <circle cx="144" cy="78" r="4" fill="#1A1A1A"/>
+                                    <circle cx="141" cy="75" r="2.5" fill="#FFFFFF"/>
+                                </g>
+                            </g>
+
+                            <!-- 眼睛群組 (開心彎彎眼 ^ ^ 狀態，預設隱藏) -->
+                            <g id="eyes-happy" class="hidden">
+                                <path d="M84,80 Q96,65 108,80" fill="none" stroke="#5A3A22" stroke-width="5" stroke-linecap="round"/>
+                                <path d="M132,80 Q144,65 156,80" fill="none" stroke="#5A3A22" stroke-width="5" stroke-linecap="round"/>
+                            </g>
+
+                            <!-- 招牌露齒大笑嘴巴 -->
+                            <g id="mouth-normal">
+                                <path d="M98,102 Q120,122 142,102 Q120,108 98,102 Z" fill="#FFFFFF" stroke="#5A3A22" stroke-width="4" stroke-linejoin="round"/>
+                            </g>
+                            <!-- 張大嘴開心笑 (預設隱藏) -->
+                            <g id="mouth-big" class="hidden">
+                                <path d="M95,100 Q120,132 145,100 Z" fill="#FF6B6B" stroke="#5A3A22" stroke-width="4" stroke-linejoin="round"/>
+                                <path d="M105,114 Q120,124 135,114" fill="#FF9EBB"/>
+                            </g>
+                        </svg>
+                    </div>
+
+                    <!-- 快速開始按鈕 -->
+                    <div class="mt-4 flex flex-wrap justify-center gap-4">
+                        <button onclick="scrollToGames()" class="bg-[#FF8C42] hover:bg-[#ff7b24] text-white font-black text-xl px-8 py-4 rounded-full btn-cartoon flex items-center gap-3 cursor-pointer">
+                            <i class="fas fa-gamepad text-2xl"></i>
+                            <span>開始遊戲！</span>
+                        </button>
+                        <button onclick="interactWithMascot()" class="bg-[#FFD23F] hover:bg-[#ffca1a] text-[#5A3A22] font-black text-lg px-6 py-4 rounded-full btn-cartoon flex items-center gap-2 cursor-pointer">
+                            <span>摸摸奶龍</span>
+                            <span>💛</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 遊戲介紹與四款遊戲選單 -->
+            <div id="games-menu" class="space-y-4">
+                <div class="flex items-center justify-between px-2">
+                    <h2 class="text-2xl sm:text-3xl font-black text-[#5A3A22] flex items-center gap-2">
+                        <span class="bg-[#FFD23F] w-10 h-10 rounded-full flex items-center justify-center border-3 border-[#5A3A22]">🎪</span>
+                        <span>遊樂園設施選單</span>
+                    </h2>
+                    <span class="text-sm font-bold bg-white/80 px-3 py-1 rounded-full border-2 border-[#5A3A22]">選擇一個遊戲開始挑戰</span>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <!-- 遊戲 1 卡片 -->
+                    <div class="card-cartoon p-5 flex flex-col justify-between bg-gradient-to-b from-white to-[#FFF8D6] hover:-translate-y-1 transition-transform">
+                        <div>
+                            <div class="w-16 h-16 rounded-2xl bg-[#FFD23F] border-3 border-[#5A3A22] flex items-center justify-center text-4xl mb-4 shadow-sm">
+                                💰
+                            </div>
+                            <h3 class="text-xl font-black mb-2 text-[#5A3A22]">1. 奶龍接金幣</h3>
+                            <p class="text-sm font-medium text-[#7A5638] mb-4">
+                                限時 60 秒！左右移動奶龍接住天上掉下來的金幣與愛心道具，小心別接到炸彈喔！
+                            </p>
+                        </div>
+                        <div>
+                            <div class="text-xs font-bold text-[#FF8C42] mb-3">
+                                🏆 最高紀錄：<span id="home-best-catch">0</span> 分
+                            </div>
+                            <button onclick="navigateTo('game-catch')" class="w-full bg-[#FFD23F] font-black py-3 rounded-2xl btn-cartoon text-center">
+                                立即遊玩
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 遊戲 2 卡片 -->
+                    <div class="card-cartoon p-5 flex flex-col justify-between bg-gradient-to-b from-white to-[#E0F7FF] hover:-translate-y-1 transition-transform">
+                        <div>
+                            <div class="w-16 h-16 rounded-2xl bg-[#70D6FF] border-3 border-[#5A3A22] flex items-center justify-center text-4xl mb-4 shadow-sm">
+                                🏃
+                            </div>
+                            <h3 class="text-xl font-black mb-2 text-[#5A3A22]">2. 奶龍跳跳樂</h3>
+                            <p class="text-sm font-medium text-[#7A5638] mb-4">
+                                按空白鍵或點擊螢幕跳躍！閃避路上的仙人掌與石頭，速度會越來越快喔！
+                            </p>
+                        </div>
+                        <div>
+                            <div class="text-xs font-bold text-[#0088CC] mb-3">
+                                🏆 最高紀錄：<span id="home-best-jump">0</span> 分
+                            </div>
+                            <button onclick="navigateTo('game-jump')" class="w-full bg-[#70D6FF] font-black py-3 rounded-2xl btn-cartoon text-center">
+                                立即遊玩
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 遊戲 3 卡片 -->
+                    <div class="card-cartoon p-5 flex flex-col justify-between bg-gradient-to-b from-white to-[#FFE5F0] hover:-translate-y-1 transition-transform">
+                        <div>
+                            <div class="w-16 h-16 rounded-2xl bg-[#FF70A6] border-3 border-[#5A3A22] flex items-center justify-center text-4xl mb-4 shadow-sm">
+                                🃏
+                            </div>
+                            <h3 class="text-xl font-black mb-2 text-[#5A3A22]">3. 奶龍翻牌記憶</h3>
+                            <p class="text-sm font-medium text-[#7A5638] mb-4">
+                                翻開可愛的奶龍主題卡片，考驗你的記憶力，用最少步數與最短時間完成全部配對！
+                            </p>
+                        </div>
+                        <div>
+                            <div class="text-xs font-bold text-[#D93875] mb-3">
+                                🏆 最佳成績：<span id="home-best-memory">尚未通關</span>
+                            </div>
+                            <button onclick="navigateTo('game-memory')" class="w-full bg-[#FF70A6] text-white font-black py-3 rounded-2xl btn-cartoon text-center">
+                                立即遊玩
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 遊戲 4 卡片 -->
+                    <div class="card-cartoon p-5 flex flex-col justify-between bg-gradient-to-b from-white to-[#FFEBD6] hover:-translate-y-1 transition-transform">
+                        <div>
+                            <div class="w-16 h-16 rounded-2xl bg-[#FF8C42] border-3 border-[#5A3A22] flex items-center justify-center text-4xl mb-4 shadow-sm">
+                                🍔
+                            </div>
+                            <h3 class="text-xl font-black mb-2 text-[#5A3A22]">4. 奶龍餵食挑戰</h3>
+                            <p class="text-sm font-medium text-[#7A5638] mb-4">
+                                拖曳美味食物給貪吃的奶龍！觀察奶龍對不同食物的可愛反應，把飽食度與開心度填滿吧！
+                            </p>
+                        </div>
+                        <div>
+                            <div class="text-xs font-bold text-[#D95D14] mb-3">
+                                🏆 累計餵食：<span id="home-best-feed">0</span> 次
+                            </div>
+                            <button onclick="navigateTo('game-feed')" class="w-full bg-[#FF8C42] text-white font-black py-3 rounded-2xl btn-cartoon text-center">
+                                立即遊玩
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== 2. 遊戲1：奶龍接金幣 ==================== -->
+        <section id="view-game-catch" class="hidden space-y-4">
+            <div class="card-cartoon p-4 sm:p-6">
+                <!-- 頂部狀態列 -->
+                <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+                    <div class="flex items-center gap-3">
+                        <button onclick="navigateTo('home')" class="bg-white px-3 py-2 rounded-xl btn-cartoon font-bold text-sm">
+                            <i class="fas fa-arrow-left"></i> 返回
+                        </button>
+                        <h2 class="text-xl sm:text-2xl font-black">💰 奶龍接金幣</h2>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-3 font-black text-base sm:text-lg">
+                        <div class="bg-[#FFF8D6] px-4 py-1.5 rounded-xl border-3 border-[#5A3A22]">
+                            ⏱️ 時間：<span id="catch-time" class="text-[#FF8C42]">60</span>s
+                        </div>
+                        <div class="bg-[#FFD23F] px-4 py-1.5 rounded-xl border-3 border-[#5A3A22]">
+                            ⭐ 分數：<span id="catch-score">0</span>
+                        </div>
+                        <div class="bg-[#70D6FF] px-4 py-1.5 rounded-xl border-3 border-[#5A3A22]">
+                            🏆 最高：<span id="catch-high">0</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 遊戲畫布區域 -->
+                <div class="game-canvas-wrapper h-[420px] sm:h-[480px]">
+                    <canvas id="canvas-catch" class="w-full h-full block"></canvas>
+
+                    <!-- 開始 / 結束覆蓋層 -->
+                    <div id="catch-overlay" class="absolute inset-0 bg-black/40 backdrop-blur-xs flex flex-col items-center justify-center p-6 text-center">
+                        <div class="card-cartoon p-6 max-w-md w-full bg-[#FFFDF7]">
+                            <div class="text-5xl mb-3">💰🦖</div>
+                            <h3 id="catch-overlay-title" class="text-2xl font-black mb-2">準備好接金幣了嗎？</h3>
+                            <p id="catch-overlay-desc" class="text-sm font-bold text-[#7A5638] mb-5">
+                                使用鍵盤 <b>← / → 方向鍵</b> 或 <b>手指/滑鼠左右拖曳</b> 移動奶龍！<br>
+                                🪙金幣 +10分 | 🍰蛋糕 +30分 | 💣炸彈 -20分
+                            </p>
+                            <button onclick="CatchGame.start()" class="bg-[#FFD23F] font-black text-xl px-8 py-3 rounded-2xl btn-cartoon w-full">
+                                開始遊戲
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 手機版虛擬左右方向按鈕 (電腦也可用) -->
+                <div class="mt-4 flex justify-center gap-6">
+                    <button id="catch-btn-left" class="bg-[#FFD23F] active:bg-[#FF8C42] w-24 h-14 rounded-2xl btn-cartoon text-2xl font-black flex items-center justify-center">
+                        <i class="fas fa-arrow-left"></i>
+                    </button>
+                    <button onclick="CatchGame.start()" class="bg-white px-5 h-14 rounded-2xl btn-cartoon font-bold text-sm flex items-center gap-1">
+                        <i class="fas fa-redo"></i> 重新開始
+                    </button>
+                    <button id="catch-btn-right" class="bg-[#FFD23F] active:bg-[#FF8C42] w-24 h-14 rounded-2xl btn-cartoon text-2xl font-black flex items-center justify-center">
+                        <i class="fas fa-arrow-right"></i>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== 3. 遊戲2：奶龍跳跳樂 ==================== -->
+        <section id="view-game-jump" class="hidden space-y-4">
+            <div class="card-cartoon p-4 sm:p-6">
+                <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+                    <div class="flex items-center gap-3">
+                        <button onclick="navigateTo('home')" class="bg-white px-3 py-2 rounded-xl btn-cartoon font-bold text-sm">
+                            <i class="fas fa-arrow-left"></i> 返回
+                        </button>
+                        <h2 class="text-xl sm:text-2xl font-black">🏃 奶龍跳跳樂</h2>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-3 font-black text-base sm:text-lg">
+                        <div class="bg-[#70D6FF] px-4 py-1.5 rounded-xl border-3 border-[#5A3A22]">
+                            🚀 速度：<span id="jump-speed">1.0</span>x
+                        </div>
+                        <div class="bg-[#FFD23F] px-4 py-1.5 rounded-xl border-3 border-[#5A3A22]">
+                            ⭐ 分數：<span id="jump-score">0</span>
+                        </div>
+                        <div class="bg-[#FF70A6] text-white px-4 py-1.5 rounded-xl border-3 border-[#5A3A22]">
+                            🏆 最高：<span id="jump-high">0</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 遊戲畫布區域 -->
+                <div class="game-canvas-wrapper h-[380px] sm:h-[440px]">
+                    <canvas id="canvas-jump" class="w-full h-full block cursor-pointer"></canvas>
+
+                    <!-- 開始 / 結束覆蓋層 -->
+                    <div id="jump-overlay" class="absolute inset-0 bg-black/40 backdrop-blur-xs flex flex-col items-center justify-center p-6 text-center">
+                        <div class="card-cartoon p-6 max-w-md w-full bg-[#FFFDF7]">
+                            <div class="text-5xl mb-3">🦖🌵</div>
+                            <h3 id="jump-overlay-title" class="text-2xl font-black mb-2">奶龍大冒險出發！</h3>
+                            <p id="jump-overlay-desc" class="text-sm font-bold text-[#7A5638] mb-5">
+                                按下 <b>空白鍵 (Space)</b>、<b>↑鍵</b> 或 <b>點擊畫面</b> 讓奶龍跳躍！<br>
+                                支援二段跳喔！隨著時間速度會越來越快！
+                            </p>
+                            <button onclick="JumpGame.start()" class="bg-[#70D6FF] font-black text-xl px-8 py-3 rounded-2xl btn-cartoon w-full">
+                                開始奔跑
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 下方控制按鈕 -->
+                <div class="mt-4 flex justify-center gap-4">
+                    <button onclick="JumpGame.jump()" class="bg-[#70D6FF] px-8 py-3 rounded-2xl btn-cartoon font-black text-lg flex items-center gap-2">
+                        <i class="fas fa-arrow-up"></i> 跳躍 (空白鍵)
+                    </button>
+                    <button onclick="JumpGame.start()" class="bg-white px-5 py-3 rounded-2xl btn-cartoon font-bold text-sm flex items-center gap-1">
+                        <i class="fas fa-redo"></i> 重新開始
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== 4. 遊戲3：奶龍翻牌記憶 ==================== -->
+        <section id="view-game-memory" class="hidden space-y-4">
+            <div class="card-cartoon p-4 sm:p-6">
+                <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+                    <div class="flex items-center gap-3">
+                        <button onclick="navigateTo('home')" class="bg-white px-3 py-2 rounded-xl btn-cartoon font-bold text-sm">
+                            <i class="fas fa-arrow-left"></i> 返回
+                        </button>
+                        <h2 class="text-xl sm:text-2xl font-black">🃏 奶龍翻牌記憶</h2>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-3 font-black text-base sm:text-lg">
+                        <div class="bg-[#FFF8D6] px-4 py-1.5 rounded-xl border-3 border-[#5A3A22]">
+                            ⏱️ 時間：<span id="mem-time">0</span>s
+                        </div>
+                        <div class="bg-[#FF70A6] text-white px-4 py-1.5 rounded-xl border-3 border-[#5A3A22]">
+                            🔄 翻牌次數：<span id="mem-flips">0</span>
+                        </div>
+                        <button onclick="MemoryGame.init()" class="bg-[#FFD23F] px-4 py-1.5 rounded-xl btn-cartoon text-sm font-black">
+                            <i class="fas fa-redo"></i> 重新洗牌
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 卡片網格區域 (4x4 = 16張卡片，8對圖案) -->
+                <div id="memory-grid" class="grid grid-cols-4 gap-3 sm:gap-4 max-w-xl mx-auto my-4">
+                    <!-- 由 JavaScript 動態產生卡片 -->
+                </div>
+
+                <!-- 過關祝賀訊息區 -->
+                <div id="memory-win-banner" class="hidden mt-4 p-5 bg-[#FFF8D6] border-4 border-[#5A3A22] rounded-2xl text-center animate-bounce">
+                    <h3 class="text-2xl font-black text-[#FF8C42] mb-1">🎉 太棒了！全部配對成功！ 🎉</h3>
+                    <p id="memory-win-stats" class="font-bold text-[#5A3A22] mb-3"></p>
+                    <button onclick="MemoryGame.init()" class="bg-[#FF70A6] text-white font-black px-6 py-2 rounded-xl btn-cartoon">
+                        再玩一局
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== 5. 遊戲4：奶龍餵食挑戰 ==================== -->
+        <section id="view-game-feed" class="hidden space-y-4">
+            <div class="card-cartoon p-4 sm:p-6">
+                <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+                    <div class="flex items-center gap-3">
+                        <button onclick="navigateTo('home')" class="bg-white px-3 py-2 rounded-xl btn-cartoon font-bold text-sm">
+                            <i class="fas fa-arrow-left"></i> 返回
+                        </button>
+                        <h2 class="text-xl sm:text-2xl font-black">🍔 奶龍餵食挑戰</h2>
+                    </div>
+                    <button onclick="FeedGame.reset()" class="bg-white px-4 py-2 rounded-xl btn-cartoon font-bold text-sm">
+                        <i class="fas fa-redo"></i> 重置狀態
+                    </button>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
+                    <!-- 左側：奶龍進食互動區 (放置目標區) -->
+                    <div id="feed-drop-zone" class="bg-gradient-to-b from-[#E0F7FF] to-[#FFF8D6] border-4 border-dashed border-[#5A3A22] rounded-3xl p-6 flex flex-col items-center justify-center relative transition-colors duration-200">
+                        <!-- 奶龍狀態氣泡 -->
+                        <div id="feed-reaction-bubble" class="bg-white border-3 border-[#5A3A22] px-5 py-2 rounded-2xl font-black text-base sm:text-lg text-center shadow-md mb-4">
+                            肚子咕嚕咕嚕叫～請拖曳食物給我吃！🤤
+                        </div>
+
+                        <!-- 餵食區奶龍 SVG -->
+                        <div id="feed-nailong-avatar" class="w-48 h-48 sm:w-56 sm:h-56 transition-transform duration-200">
+                            <svg viewBox="0 0 240 240" class="w-full h-full drop-shadow-lg">
+                                <!-- 身體 -->
+                                <ellipse cx="120" cy="155" rx="64" ry="60" fill="#FFD23F" stroke="#5A3A22" stroke-width="5"/>
+                                <ellipse cx="120" cy="162" rx="44" ry="44" fill="#FFF8D6"/>
+                                <!-- 頭部 -->
+                                <ellipse cx="120" cy="85" rx="58" ry="52" fill="#FFD23F" stroke="#5A3A22" stroke-width="5"/>
+                                <!-- 手臂 -->
+                                <ellipse cx="62" cy="145" rx="16" ry="12" transform="rotate(-25 62 145)" fill="#FFD23F" stroke="#5A3A22" stroke-width="5"/>
+                                <ellipse cx="178" cy="145" rx="16" ry="12" transform="rotate(25 178 145)" fill="#FFD23F" stroke="#5A3A22" stroke-width="5"/>
+                                <!-- 腮紅 -->
+                                <ellipse cx="78" cy="96" rx="12" ry="7" fill="#FF70A6" opacity="0.7"/>
+                                <ellipse cx="162" cy="96" rx="12" ry="7" fill="#FF70A6" opacity="0.7"/>
+
+                                <!-- 表情 1: 期待張嘴 (預設) -->
+                                <g id="feed-face-normal">
+                                    <circle cx="96" cy="78" r="11" fill="#FFFFFF" stroke="#5A3A22" stroke-width="4"/>
+                                    <circle cx="96" cy="78" r="5" fill="#1A1A1A"/>
+                                    <circle cx="144" cy="78" r="11" fill="#FFFFFF" stroke="#5A3A22" stroke-width="4"/>
+                                    <circle cx="144" cy="78" r="5" fill="#1A1A1A"/>
+                                    <ellipse cx="120" cy="108" rx="16" ry="12" fill="#FF6B6B" stroke="#5A3A22" stroke-width="4"/>
+                                </g>
+
+                                <!-- 表情 2: 超級美味愛心眼 (預設隱藏) -->
+                                <g id="feed-face-love" class="hidden">
+                                    <text x="83" y="88" font-size="26" fill="#FF477E">♥</text>
+                                    <text x="132" y="88" font-size="26" fill="#FF477E">♥</text>
+                                    <path d="M95,100 Q120,132 145,100 Z" fill="#FF6B6B" stroke="#5A3A22" stroke-width="4"/>
+                                </g>
+
+                                <!-- 表情 3: 辣到噴火 / 酸到皺眉 (預設隱藏) -->
+                                <g id="feed-face-spicy" class="hidden">
+                                    <path d="M85,72 L105,82 L85,88" fill="none" stroke="#5A3A22" stroke-width="5" stroke-linecap="round"/>
+                                    <path d="M155,72 L135,82 L155,88" fill="none" stroke="#5A3A22" stroke-width="5" stroke-linecap="round"/>
+                                    <path d="M100,112 Q110,102 120,112 Q130,102 140,112" fill="none" stroke="#5A3A22" stroke-width="5" stroke-linecap="round"/>
+                                </g>
+                            </svg>
+                        </div>
+
+                        <p class="text-xs font-bold text-[#8C6239] mt-2">
+                            💡 提示：直接把右邊的食物「拖曳」到奶龍身上，或「點擊」食物直接餵食！
+                        </p>
+                    </div>
+
+                    <!-- 右側：數值條與食物選擇盤 -->
+                    <div class="space-y-5">
+                        <!-- 飽食度與開心度進度條 -->
+                        <div class="bg-[#FFF8D6] p-4 rounded-2xl border-3 border-[#5A3A22] space-y-3">
+                            <div>
+                                <div class="flex justify-between font-black text-sm mb-1">
+                                    <span>🍖 飽食度 (Fullness)</span>
+                                    <span id="feed-fullness-text">50 / 100</span>
+                                </div>
+                                <div class="w-full h-5 bg-white rounded-full border-3 border-[#5A3A22] overflow-hidden">
+                                    <div id="feed-fullness-bar" class="h-full bg-[#FF8C42] transition-all duration-300" style="width: 50%"></div>
+                                </div>
+                            </div>
+
+                            <div>
+                                <div class="flex justify-between font-black text-sm mb-1">
+                                    <span>💖 開心程度 (Happiness)</span>
+                                    <span id="feed-happy-text">60 / 100</span>
+                                </div>
+                                <div class="w-full h-5 bg-white rounded-full border-3 border-[#5A3A22] overflow-hidden">
+                                    <div id="feed-happy-bar" class="h-full bg-[#FF70A6] transition-all duration-300" style="width: 60%"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 食物選擇區 -->
+                        <div>
+                            <h3 class="font-black text-lg mb-3">🍽️ 選擇要餵食的料理：</h3>
+                            <div id="food-menu" class="grid grid-cols-3 gap-3">
+                                <!-- 由 JS 產生食物卡片 -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- ================= 分數紀錄彈出視窗 (Modal) ================= -->
+    <div id="records-modal" class="hidden fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
+        <div class="card-cartoon max-w-md w-full p-6 bg-[#FFFDF7] relative animate-bounce-in">
+            <button onclick="toggleRecordsModal(false)" class="absolute top-4 right-4 bg-[#FF70A6] text-white w-9 h-9 rounded-full btn-cartoon font-black flex items-center justify-center">
+                ✕
+            </button>
+            <h3 class="text-2xl font-black text-center mb-4 flex items-center justify-center gap-2">
+                <span>🏆</span> 奶龍遊樂園榮譽榜
+            </h3>
+            <div class="space-y-3 font-bold">
+                <div class="flex justify-between items-center bg-[#FFF8D6] p-3 rounded-xl border-2 border-[#5A3A22]">
+                    <span>💰 奶龍接金幣最高分</span>
+                    <span id="modal-best-catch" class="text-xl font-black text-[#FF8C42]">0 分</span>
+                </div>
+                <div class="flex justify-between items-center bg-[#E0F7FF] p-3 rounded-xl border-2 border-[#5A3A22]">
+                    <span>🏃 奶龍跳跳樂最高分</span>
+                    <span id="modal-best-jump" class="text-xl font-black text-[#0088CC]">0 分</span>
+                </div>
+                <div class="flex justify-between items-center bg-[#FFE5F0] p-3 rounded-xl border-2 border-[#5A3A22]">
+                    <span>🃏 翻牌記憶最佳步數</span>
+                    <span id="modal-best-memory" class="text-lg font-black text-[#D93875]">尚未通關</span>
+                </div>
+                <div class="flex justify-between items-center bg-[#FFEBD6] p-3 rounded-xl border-2 border-[#5A3A22]">
+                    <span>🍔 累計餵食奶龍次數</span>
+                    <span id="modal-best-feed" class="text-xl font-black text-[#D95D14]">0 次</span>
+                </div>
+            </div>
+            <div class="mt-5 flex gap-3">
+                <button onclick="clearAllRecords()" class="flex-1 bg-gray-200 hover:bg-gray-300 py-2.5 rounded-xl btn-cartoon font-bold text-sm">
+                    清除紀錄
+                </button>
+                <button onclick="toggleRecordsModal(false)" class="flex-1 bg-[#FFD23F] py-2.5 rounded-xl btn-cartoon font-black">
+                    太棒了！
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= 程式碼邏輯區 (音效、狀態管理、四大遊戲引擎) ================= -->
+    <script>
+        /**
+         * 1. Web Audio API 可愛音效與背景音樂合成器 (無需外部音檔即可發出可愛音效)
+         */
+        const SoundSystem = {
+            ctx: null,
+            sfxEnabled: true,
+            bgmEnabled: false,
+            bgmInterval: null,
+            noteIndex: 0,
+
+            init() {
+                if (!this.ctx) {
+                    const AudioContext = window.AudioContext || window.webkitAudioContext;
+                    this.ctx = new AudioContext();
+                }
+                if (this.ctx.state === 'suspended') {
+                    this.ctx.resume();
+                }
+            },
+
+            // 播放單音
+            playTone(freq, type = 'sine', duration = 0.15, vol = 0.15, delay = 0) {
+                if (!this.sfxEnabled) return;
+                this.init();
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = type;
+                osc.frequency.setValueAtTime(freq, this.ctx.currentTime + delay);
+
+                gain.gain.setValueAtTime(vol, this.ctx.currentTime + delay);
+                gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + delay + duration);
+
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start(this.ctx.currentTime + delay);
+                osc.stop(this.ctx.currentTime + delay + duration);
+            },
+
+            // 各種可愛遊戲音效
+            playClick() { this.playTone(523.25, 'sine', 0.1, 0.15); },
+            playJump() {
+                if (!this.sfxEnabled) return;
+                this.init();
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(280, this.ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(620, this.ctx.currentTime + 0.18);
+                gain.gain.setValueAtTime(0.18, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.18);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start();
+                osc.stop(this.ctx.currentTime + 0.18);
+            },
+            playCoin() {
+                this.playTone(987.77, 'sine', 0.1, 0.15, 0);
+                this.playTone(1318.51, 'sine', 0.2, 0.15, 0.08);
+            },
+            playBonus() {
+                this.playTone(523.25, 'triangle', 0.1, 0.18, 0);
+                this.playTone(659.25, 'triangle', 0.1, 0.18, 0.07);
+                this.playTone(783.99, 'triangle', 0.1, 0.18, 0.14);
+                this.playTone(1046.50, 'triangle', 0.25, 0.2, 0.21);
+            },
+            playHurt() {
+                this.playTone(220, 'sawtooth', 0.15, 0.15, 0);
+                this.playTone(150, 'sawtooth', 0.25, 0.15, 0.1);
+            },
+            playWin() {
+                const notes = [523.25, 659.25, 783.99, 1046.50, 783.99, 1046.50];
+                notes.forEach((n, i) => this.playTone(n, 'triangle', 0.18, 0.18, i * 0.12));
+            },
+
+            toggleSFX() {
+                this.sfxEnabled = !this.sfxEnabled;
+                const icon = document.getElementById('icon-sfx');
+                const btn = document.getElementById('btn-sfx');
+                if (this.sfxEnabled) {
+                    icon.className = 'fas fa-volume-up';
+                    btn.innerHTML = `<i id="icon-sfx" class="fas fa-volume-up"></i><span class="hidden md:inline ml-1">音效:開</span>`;
+                    this.playClick();
+                } else {
+                    btn.innerHTML = `<i id="icon-sfx" class="fas fa-volume-mute"></i><span class="hidden md:inline ml-1">音效:關</span>`;
+                }
+            },
+
+            toggleBGM() {
+                this.bgmEnabled = !this.bgmEnabled;
+                const btn = document.getElementById('btn-bgm');
+                if (this.bgmEnabled) {
+                    this.init();
+                    btn.innerHTML = `<i id="icon-bgm" class="fas fa-music fa-bounce"></i><span id="text-bgm" class="hidden md:inline ml-1">音樂:開</span>`;
+                    // 輕快可愛的八音盒旋律循環
+                    const melody = [
+                        523.25, 659.25, 783.99, 659.25, 880.00, 783.99, 659.25, 523.25,
+                        587.33, 698.46, 880.00, 698.46, 783.99, 659.25, 587.33, 493.88
+                    ];
+                    this.bgmInterval = setInterval(() => {
+                        if (!this.bgmEnabled) return;
+                        const freq = melody[this.noteIndex % melody.length];
+                        const osc = this.ctx.createOscillator();
+                        const gain = this.ctx.createGain();
+                        osc.type = 'sine';
+                        osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+                        gain.gain.setValueAtTime(0.05, this.ctx.currentTime);
+                        gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.32);
+                        osc.connect(gain);
+                        gain.connect(this.ctx.destination);
+                        osc.start();
+                        osc.stop(this.ctx.currentTime + 0.32);
+                        this.noteIndex++;
+                    }, 350);
+                } else {
+                    clearInterval(this.bgmInterval);
+                    btn.innerHTML = `<i id="icon-bgm" class="fas fa-music"></i><span id="text-bgm" class="hidden md:inline ml-1">音樂:關</span>`;
+                }
+            }
+        };
+
+        /**
+         * 2. 分數紀錄管理系統 (LocalStorage)
+         */
+        const ScoreManager = {
+            data: {
+                catchBest: 0,
+                jumpBest: 0,
+                memoryBestFlips: null,
+                feedCount: 0
+            },
+            load() {
+                try {
+                    const saved = localStorage.getItem('nailong_playground_records');
+                    if (saved) this.data = { ...this.data, ...JSON.parse(saved) };
+                } catch (e) {}
+                this.updateUI();
+            },
+            save() {
+                try {
+                    localStorage.setItem('nailong_playground_records', JSON.stringify(this.data));
+                } catch (e) {}
+                this.updateUI();
+            },
+            updateUI() {
+                document.getElementById('home-best-catch').textContent = this.data.catchBest;
+                document.getElementById('catch-high').textContent = this.data.catchBest;
+                document.getElementById('modal-best-catch').textContent = `${this.data.catchBest} 分`;
+
+                document.getElementById('home-best-jump').textContent = this.data.jumpBest;
+                document.getElementById('jump-high').textContent = this.data.jumpBest;
+                document.getElementById('modal-best-jump').textContent = `${this.data.jumpBest} 分`;
+
+                const memText = this.data.memoryBestFlips ? `${this.data.memoryBestFlips} 次翻牌` : '尚未通關';
+                document.getElementById('home-best-memory').textContent = memText;
+                document.getElementById('modal-best-memory').textContent = memText;
+
+                document.getElementById('home-best-feed').textContent = this.data.feedCount;
+                document.getElementById('modal-best-feed').textContent = `${this.data.feedCount} 次`;
+            }
+        };
+
+        function toggleRecordsModal(show) {
+            SoundSystem.playClick();
+            const modal = document.getElementById('records-modal');
+            if (show) {
+                ScoreManager.updateUI();
+                modal.classList.remove('hidden');
+            } else {
+                modal.classList.add('hidden');
+            }
+        }
+
+        function clearAllRecords() {
+            ScoreManager.data = { catchBest: 0, jumpBest: 0, memoryBestFlips: null, feedCount: 0 };
+            ScoreManager.save();
+            SoundSystem.playHurt();
+        }
+
+        /**
+         * 3. 頁面導航切換
+         */
+        function navigateTo(viewId) {
+            SoundSystem.playClick();
+            // 停止進行中的 Canvas 遊戲迴圈以節省效能
+            CatchGame.stop();
+            JumpGame.stop();
+
+            const views = ['home', 'game-catch', 'game-jump', 'game-memory', 'game-feed'];
+            views.forEach(v => {
+                const el = document.getElementById(`view-${v}`);
+                if (el) el.classList.add('hidden');
+            });
+
+            const target = document.getElementById(`view-${viewId}`);
+            if (target) target.classList.remove('hidden');
+
+            // 初始化對應遊戲畫面
+            if (viewId === 'game-catch') CatchGame.resizeCanvas();
+            if (viewId === 'game-jump') JumpGame.resizeCanvas();
+            if (viewId === 'game-memory') MemoryGame.init();
+            if (viewId === 'game-feed') FeedGame.init();
+
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function scrollToGames() {
+            SoundSystem.playClick();
+            document.getElementById('games-menu').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        /**
+         * 4. 首頁奶龍角色互動 (滑鼠眼神跟隨 + 點擊表情與跳躍)
+         */
+        const mascotQuotes = [
+            "嘿嘿！被你發現我啦～一起玩遊戲吧！💛",
+            "肚子好餓呀，要不要去餵食挑戰請我吃蛋糕？🍰",
+            "跳高高！我可是遊樂園裡最靈活的小恐龍！🦖",
+            "哇～好喜歡你摸摸我的頭！開心到飛起來～✨",
+            "金幣亮晶晶的，快幫我接住它們吧！💰"
+        ];
+        let mascotTimer = null;
+
+        // 滑鼠移動時，奶龍眼珠跟隨
+        document.addEventListener('mousemove', (e) => {
+            const mascot = document.getElementById('mascot-container');
+            if (!mascot || document.getElementById('view-home').classList.contains('hidden')) return;
+
+            const rect = mascot.getBoundingClientRect();
+            const centerX = rect.left + rect.width / 2;
+            const centerY = rect.top + rect.height / 2;
+
+            const dx = Math.max(-5, Math.min(5, (e.clientX - centerX) / 45));
+            const dy = Math.max(-4, Math.min(4, (e.clientY - centerY) / 45));
+
+            const pLeft = document.getElementById('pupil-left');
+            const pRight = document.getElementById('pupil-right');
+            if (pLeft && pRight) {
+                pLeft.setAttribute('transform', `translate(${dx}, ${dy})`);
+                pRight.setAttribute('transform', `translate(${dx}, ${dy})`);
+            }
+        });
+
+        // 點擊首頁奶龍觸發跳躍與開心表情
+        function interactWithMascot() {
+            SoundSystem.playBonus();
+            const container = document.getElementById('mascot-container');
+            const speech = document.getElementById('nailong-speech');
+            const eyesNormal = document.getElementById('eyes-normal');
+            const eyesHappy = document.getElementById('eyes-happy');
+            const mouthNormal = document.getElementById('mouth-normal');
+            const mouthBig = document.getElementById('mouth-big');
+
+            // 跳躍動畫
+            container.classList.remove('animate-jump-cute');
+            void container.offsetWidth; // 觸發重繪
+            container.classList.add('animate-jump-cute');
+
+            // 切換開心表情
+            eyesNormal.classList.add('hidden');
+            eyesHappy.classList.remove('hidden');
+            mouthNormal.classList.add('hidden');
+            mouthBig.classList.remove('hidden');
+
+            // 隨機台詞
+            const randomQuote = mascotQuotes[Math.floor(Math.random() * mascotQuotes.length)];
+            speech.textContent = randomQuote;
+            speech.classList.add('bg-[#FFD23F]');
+
+            clearTimeout(mascotTimer);
+            mascotTimer = setTimeout(() => {
+                eyesNormal.classList.remove('hidden');
+                eyesHappy.classList.add('hidden');
+                mouthNormal.classList.remove('hidden');
+                mouthBig.classList.add('hidden');
+                speech.classList.remove('bg-[#FFD23F]');
+            }, 1400);
+        }
+
+        // 繪製 Canvas 內使用的可愛奶龍角色函數
+        function drawCanvasNailong(ctx, x, y, w, h, facingRight = true) {
+            ctx.save();
+            ctx.translate(x + w / 2, y + h / 2);
+            if (!facingRight) ctx.scale(-1, 1);
+
+            const r = w / 2;
+            // 身體
+            ctx.fillStyle = '#FFD23F';
+            ctx.strokeStyle = '#5A3A22';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.ellipse(0, r * 0.25, r * 0.78, r * 0.72, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+
+            // 奶油肚肚
+            ctx.fillStyle = '#FFF8D6';
+            ctx.beginPath();
+            ctx.ellipse(r * 0.1, r * 0.3, r * 0.5, r * 0.52, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            // 頭部
+            ctx.fillStyle = '#FFD23F';
+            ctx.beginPath();
+            ctx.ellipse(0, -r * 0.45, r * 0.72, r * 0.62, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+
+            // 眼睛
+            ctx.fillStyle = '#FFFFFF';
+            ctx.beginPath();
+            ctx.arc(r * 0.25, -r * 0.52, r * 0.18, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+
+            ctx.fillStyle = '#1A1A1A';
+            ctx.beginPath();
+            ctx.arc(r * 0.28, -r * 0.52, r * 0.09, 0, Math.PI * 2);
+            ctx.fill();
+
+            // 腮紅
+            ctx.fillStyle = 'rgba(255, 112, 166, 0.7)';
+            ctx.beginPath();
+            ctx.ellipse(r * 0.15, -r * 0.28, r * 0.15, r * 0.09, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            // 微笑
+            ctx.beginPath();
+            ctx.arc(r * 0.22, -r * 0.25, r * 0.22, 0.1 * Math.PI, 0.85 * Math.PI);
+            ctx.stroke();
+
+            ctx.restore();
+        }
+
+        /**
+         * ==================== 遊戲 1：奶龍接金幣引擎 ====================
+         */
+        const CatchGame = {
+            canvas: null,
+            ctx: null,
+            running: false,
+            animId: null,
+            timerId: null,
+            timeLeft: 60,
+            score: 0,
+            player: { x: 200, y: 320, w: 68, h: 76, speed: 7, facingRight: true },
+            items: [],
+            floatingTexts: [],
+            keys: { left: false, right: false },
+
+            init() {
+                this.canvas = document.getElementById('canvas-catch');
+                this.ctx = this.canvas.getContext('2d');
+
+                // 鍵盤控制
+                window.addEventListener('keydown', (e) => {
+                    if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') this.keys.left = true;
+                    if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') this.keys.right = true;
+                });
+                window.addEventListener('keyup', (e) => {
+                    if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') this.keys.left = false;
+                    if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') this.keys.right = false;
+                });
+
+                // 觸控與滑鼠拖曳控制
+                const movePointer = (clientX) => {
+                    if (!this.running) return;
+                    const rect = this.canvas.getBoundingClientRect();
+                    const targetX = clientX - rect.left - this.player.w / 2;
+                    this.player.facingRight = targetX >= this.player.x;
+                    this.player.x = Math.max(0, Math.min(this.canvas.width - this.player.w, targetX));
+                };
+                this.canvas.addEventListener('mousemove', (e) => { if (e.buttons === 1) movePointer(e.clientX); });
+                this.canvas.addEventListener('touchmove', (e) => {
+                    e.preventDefault();
+                    movePointer(e.touches[0].clientX);
+                }, { passive: false });
+
+                // 虛擬按鈕長按支援
+                const bindBtn = (id, dir) => {
+                    const btn = document.getElementById(id);
+                    btn.addEventListener('mousedown', () => this.keys[dir] = true);
+                    btn.addEventListener('mouseup', () => this.keys[dir] = false);
+                    btn.addEventListener('mouseleave', () => this.keys[dir] = false);
+                    btn.addEventListener('touchstart', (e) => { e.preventDefault(); this.keys[dir] = true; });
+                    btn.addEventListener('touchend', () => this.keys[dir] = false);
+                };
+                bindBtn('catch-btn-left', 'left');
+                bindBtn('catch-btn-right', 'right');
+            },
+
+            resizeCanvas() {
+                if (!this.canvas) this.init();
+                const parent = this.canvas.parentElement;
+                this.canvas.width = parent.clientWidth;
+                this.canvas.height = parent.clientHeight;
+                this.player.y = this.canvas.height - this.player.h - 16;
+                this.player.x = this.canvas.width / 2 - this.player.w / 2;
+            },
+
+            start() {
+                SoundSystem.playClick();
+                this.resizeCanvas();
+                this.running = true;
+                this.timeLeft = 60;
+                this.score = 0;
+                this.items = [];
+                this.floatingTexts = [];
+
+                document.getElementById('catch-score').textContent = '0';
+                document.getElementById('catch-time').textContent = '60';
+                document.getElementById('catch-overlay').classList.add('hidden');
+
+                clearInterval(this.timerId);
+                this.timerId = setInterval(() => {
+                    if (!this.running) return;
+                    this.timeLeft--;
+                    document.getElementById('catch-time').textContent = this.timeLeft;
+                    if (this.timeLeft <= 0) {
+                        this.endGame();
+                    }
+                }, 1000);
+
+                cancelAnimationFrame(this.animId);
+                this.loop();
+            },
+
+            stop() {
+                this.running = false;
+                clearInterval(this.timerId);
+                cancelAnimationFrame(this.animId);
+            },
+
+            endGame() {
+                this.stop();
+                SoundSystem.playWin();
+                if (this.score > ScoreManager.data.catchBest) {
+                    ScoreManager.data.catchBest = this.score;
+                    ScoreManager.save();
+                    confetti({ particleCount: 80, spread: 70, origin: { y: 0.6 } });
+                }
+                document.getElementById('catch-overlay-title').textContent = '時間到！遊戲結束！';
+                document.getElementById('catch-overlay-desc').innerHTML = `你總共獲得了 <b class="text-2xl text-[#FF8C42]">${this.score}</b> 分！<br>最高紀錄：${ScoreManager.data.catchBest} 分`;
+                document.getElementById('catch-overlay').classList.remove('hidden');
+            },
+
+            spawnItem() {
+                const rand = Math.random();
+                let type = { emoji: '🪙', points: 10, speed: 3.5 + Math.random() * 2, label: '+10' };
+                if (rand > 0.85) {
+                    type = { emoji: '💣', points: -20, speed: 4.5 + Math.random() * 2, label: '-20', isBomb: true };
+                } else if (rand > 0.70) {
+                    type = { emoji: '🍰', points: 30, speed: 4.8 + Math.random() * 2, label: '+30' };
+                } else if (rand > 0.58) {
+                    type = { emoji: '⭐', points: 20, speed: 4.2 + Math.random() * 2, label: '+20' };
+                }
+                this.items.push({
+                    x: 24 + Math.random() * (this.canvas.width - 48),
+                    y: -30,
+                    size: 34,
+                    ...type
+                });
+            },
+
+            loop() {
+                if (!this.running) return;
+                const ctx = this.ctx;
+                const w = this.canvas.width;
+                const h = this.canvas.height;
+
+                // 繪製背景天空與草地
+                const grad = ctx.createLinearGradient(0, 0, 0, h);
+                grad.addColorStop(0, '#BCEBFF');
+                grad.addColorStop(1, '#FFF8D6');
+                ctx.fillStyle = grad;
+                ctx.fillRect(0, 0, w, h);
+
+                // 草地地板
+                ctx.fillStyle = '#9BE564';
+                ctx.fillRect(0, h - 22, w, 22);
+                ctx.fillStyle = '#5A3A22';
+                ctx.fillRect(0, h - 24, w, 3);
+
+                // 移動玩家
+                if (this.keys.left) {
+                    this.player.x -= this.player.speed;
+                    this.player.facingRight = false;
+                }
+                if (this.keys.right) {
+                    this.player.x += this.player.speed;
+                    this.player.facingRight = true;
+                }
+                this.player.x = Math.max(0, Math.min(w - this.player.w, this.player.x));
+
+                // 隨機生成掉落物
+                if (Math.random() < 0.045) this.spawnItem();
+
+                // 更新與繪製掉落物
+                ctx.font = '32px Arial';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+
+                for (let i = this.items.length - 1; i >= 0; i--) {
+                    const item = this.items[i];
+                    item.y += item.speed;
+                    ctx.fillText(item.emoji, item.x, item.y);
+
+                    // 碰撞偵測
+                    if (
+                        item.x > this.player.x - 10 &&
+                        item.x < this.player.x + this.player.w + 10 &&
+                        item.y > this.player.y &&
+                        item.y < this.player.y + this.player.h
+                    ) {
+                        this.score = Math.max(0, this.score + item.points);
+                        document.getElementById('catch-score').textContent = this.score;
+
+                        if (item.isBomb) {
+                            SoundSystem.playHurt();
+                        } else if (item.points >= 20) {
+                            SoundSystem.playBonus();
+                        } else {
+                            SoundSystem.playCoin();
+                        }
+
+                        this.floatingTexts.push({
+                            text: item.label,
+                            x: item.x,
+                            y: item.y - 15,
+                            color: item.isBomb ? '#E63946' : '#FF8C42',
+                            alpha: 1
+                        });
+                        this.items.splice(i, 1);
+                        continue;
+                    }
+
+                    if (item.y > h + 30) {
+                        this.items.splice(i, 1);
+                    }
+                }
+
+                // 繪製奶龍主角
+                drawCanvasNailong(ctx, this.player.x, this.player.y, this.player.w, this.player.h, this.player.facingRight);
+
+                // 繪製加分飄浮文字
+                ctx.font = '900 22px "Fredoka", sans-serif';
+                for (let i = this.floatingTexts.length - 1; i >= 0; i--) {
+                    const ft = this.floatingTexts[i];
+                    ft.y -= 1.5;
+                    ft.alpha -= 0.025;
+                    ctx.save();
+                    ctx.globalAlpha = Math.max(0, ft.alpha);
+                    ctx.fillStyle = ft.color;
+                    ctx.strokeStyle = '#FFFFFF';
+                    ctx.lineWidth = 4;
+                    ctx.strokeText(ft.text, ft.x, ft.y);
+                    ctx.fillText(ft.text, ft.x, ft.y);
+                    ctx.restore();
+                    if (ft.alpha <= 0) this.floatingTexts.splice(i, 1);
+                }
+
+                this.animId = requestAnimationFrame(() => this.loop());
+            }
+        };
+
+        /**
+         * ==================== 遊戲 2：奶龍跳跳樂引擎 ====================
+         */
+        const JumpGame = {
+            canvas: null,
+            ctx: null,
+            running: false,
+            animId: null,
+            score: 0,
+            speedMultiplier: 1.0,
+            groundY: 320,
+            dino: { x: 65, y: 250, w: 58, h: 64, vy: 0, gravity: 0.68, jumpPower: -13.5, jumpsLeft: 2 },
+            obstacles: [],
+            clouds: [],
+            frameCount: 0,
+
+            init() {
+                this.canvas = document.getElementById('canvas-jump');
+                this.ctx = this.canvas.getContext('2d');
+
+                window.addEventListener('keydown', (e) => {
+                    if ((e.code === 'Space' || e.key === 'ArrowUp') && !document.getElementById('view-game-jump').classList.contains('hidden')) {
+                        e.preventDefault();
+                        if (this.running) this.jump();
+                    }
+                });
+
+                this.canvas.addEventListener('mousedown', () => { if (this.running) this.jump(); });
+                this.canvas.addEventListener('touchstart', (e) => {
+                    if (this.running) {
+                        e.preventDefault();
+                        this.jump();
+                    }
+                }, { passive: false });
+            },
+
+            resizeCanvas() {
+                if (!this.canvas) this.init();
+                const parent = this.canvas.parentElement;
+                this.canvas.width = parent.clientWidth;
+                this.canvas.height = parent.clientHeight;
+                this.groundY = this.canvas.height - 45;
+                this.dino.y = this.groundY - this.dino.h;
+            },
+
+            start() {
+                SoundSystem.playClick();
+                this.resizeCanvas();
+                this.running = true;
+                this.score = 0;
+                this.speedMultiplier = 1.0;
+                this.obstacles = [];
+                this.frameCount = 0;
+                this.dino.y = this.groundY - this.dino.h;
+                this.dino.vy = 0;
+                this.dino.jumpsLeft = 2;
+
+                this.clouds = [
+                    { x: 120, y: 60, s: 1 },
+                    { x: 380, y: 95, s: 0.8 },
+                    { x: 650, y: 50, s: 1.2 }
+                ];
+
+                document.getElementById('jump-overlay').classList.add('hidden');
+                cancelAnimationFrame(this.animId);
+                this.loop();
+            },
+
+            stop() {
+                this.running = false;
+                cancelAnimationFrame(this.animId);
+            },
+
+            jump() {
+                if (!this.running) return;
+                if (this.dino.jumpsLeft > 0) {
+                    this.dino.vy = this.dino.jumpPower;
+                    this.dino.jumpsLeft--;
+                    SoundSystem.playJump();
+                }
+            },
+
+            gameOver() {
+                this.stop();
+                SoundSystem.playHurt();
+                const finalScore = Math.floor(this.score);
+                if (finalScore > ScoreManager.data.jumpBest) {
+                    ScoreManager.data.jumpBest = finalScore;
+                    ScoreManager.save();
+                    confetti({ particleCount: 70, spread: 60, origin: { y: 0.6 } });
+                }
+                document.getElementById('jump-overlay-title').textContent = '哎呀！撞到障礙物了！';
+                document.getElementById('jump-overlay-desc').innerHTML = `本次奔跑分數：<b class="text-2xl text-[#FF8C42]">${finalScore}</b> 分<br>最高紀錄：${ScoreManager.data.jumpBest} 分`;
+                document.getElementById('jump-overlay').classList.remove('hidden');
+            },
+
+            loop() {
+                if (!this.running) return;
+                const ctx = this.ctx;
+                const w = this.canvas.width;
+                const h = this.canvas.height;
+                this.frameCount++;
+
+                // 隨時間加快速度
+                this.score += 0.15 * this.speedMultiplier;
+                this.speedMultiplier = 1.0 + Math.min(1.6, this.score / 400);
+
+                document.getElementById('jump-score').textContent = Math.floor(this.score);
+                document.getElementById('jump-speed').textContent = this.speedMultiplier.toFixed(1);
+
+                // 背景天空
+                const grad = ctx.createLinearGradient(0, 0, 0, h);
+                grad.addColorStop(0, '#9BE3FF');
+                grad.addColorStop(1, '#FFFDF2');
+                ctx.fillStyle = grad;
+                ctx.fillRect(0, 0, w, h);
+
+                // 移動雲朵
+                ctx.fillStyle = 'rgba(255,255,255,0.85)';
+                this.clouds.forEach(c => {
+                    c.x -= 1.2 * this.speedMultiplier;
+                    if (c.x < -80) c.x = w + 80;
+                    ctx.beginPath();
+                    ctx.arc(c.x, c.y, 22 * c.s, 0, Math.PI * 2);
+                    ctx.arc(c.x + 20 * c.s, c.y - 6 * c.s, 26 * c.s, 0, Math.PI * 2);
+                    ctx.arc(c.x + 42 * c.s, c.y, 20 * c.s, 0, Math.PI * 2);
+                    ctx.fill();
+                });
+
+                // 地板草皮
+                ctx.fillStyle = '#9BE564';
+                ctx.fillRect(0, this.groundY, w, h - this.groundY);
+                ctx.fillStyle = '#5A3A22';
+                ctx.fillRect(0, this.groundY, w, 4);
+
+                // 奶龍物理重力
+                this.dino.vy += this.dino.gravity;
+                this.dino.y += this.dino.vy;
+                if (this.dino.y >= this.groundY - this.dino.h) {
+                    this.dino.y = this.groundY - this.dino.h;
+                    this.dino.vy = 0;
+                    this.dino.jumpsLeft = 2;
+                }
+
+                // 生成障礙物
+                const minGap = Math.max(55, Math.floor(110 / this.speedMultiplier));
+                if (this.frameCount % minGap === 0 && Math.random() < 0.78) {
+                    const types = [
+                        { emoji: '🌵', w: 36, h: 44 },
+                        { emoji: '🪨', w: 40, h: 34 },
+                        { emoji: '🍄', w: 36, h: 36 }
+                    ];
+                    const t = types[Math.floor(Math.random() * types.length)];
+                    this.obstacles.push({
+                        x: w + 30,
+                        y: this.groundY - t.h + 4,
+                        ...t
+                    });
+                }
+
+                // 更新與繪製障礙物
+                ctx.font = '38px Arial';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'bottom';
+                const moveSpeed = 6 * this.speedMultiplier;
+
+                for (let i = this.obstacles.length - 1; i >= 0; i--) {
+                    const obs = this.obstacles[i];
+                    obs.x -= moveSpeed;
+                    ctx.fillText(obs.emoji, obs.x + obs.w / 2, this.groundY + 4);
+
+                    // 寬容碰撞箱判定
+                    const pad = 12;
+                    if (
+                        this.dino.x + pad < obs.x + obs.w - pad &&
+                        this.dino.x + this.dino.w - pad > obs.x + pad &&
+                        this.dino.y + pad < obs.y + obs.h &&
+                        this.dino.y + this.dino.h - pad > obs.y
+                    ) {
+                        this.gameOver();
+                        return;
+                    }
+
+                    if (obs.x < -60) this.obstacles.splice(i, 1);
+                }
+
+                // 繪製奔跑中的奶龍
+                drawCanvasNailong(ctx, this.dino.x, this.dino.y, this.dino.w, this.dino.h, true);
+
+                this.animId = requestAnimationFrame(() => this.loop());
+            }
+        };
+
+        /**
+         * ==================== 遊戲 3：奶龍翻牌記憶引擎 ====================
+         */
+        const MemoryGame = {
+            cardsData: [
+                { id: 'happy', icon: '🦖', label: '開心奶龍' },
+                { id: 'cake', icon: '🍰', label: '草莓蛋糕' },
+                { id: 'star', icon: '⭐', label: '閃亮星星' },
+                { id: 'heart', icon: '💖', label: '粉紅愛心' },
+                { id: 'icecream', icon: '🍦', label: '甜筒冰淇淋' },
+                { id: 'rainbow', icon: '🌈', label: '七彩彩虹' },
+                { id: 'crown', icon: '👑', label: '黃金皇冠' },
+                { id: 'burger', icon: '🍔', label: '美味漢堡' }
+            ],
+            flippedCards: [],
+            matchedPairs: 0,
+            flips: 0,
+            seconds: 0,
+            timer: null,
+            lockBoard: false,
+
+            init() {
+                clearInterval(this.timer);
+                this.flippedCards = [];
+                this.matchedPairs = 0;
+                this.flips = 0;
+                this.seconds = 0;
+                this.lockBoard = false;
+
+                document.getElementById('mem-time').textContent = '0';
+                document.getElementById('mem-flips').textContent = '0';
+                document.getElementById('memory-win-banner').classList.add('hidden');
+
+                // 複製成 16 張並洗牌
+                const deck = [...this.cardsData, ...this.cardsData]
+                    .sort(() => Math.random() - 0.5);
+
+                const grid = document.getElementById('memory-grid');
+                grid.innerHTML = '';
+
+                deck.forEach((item, index) => {
+                    const card = document.createElement('div');
+                    card.className = 'perspective-1000 h-24 sm:h-28 cursor-pointer';
+                    card.dataset.id = item.id;
+                    card.innerHTML = `
+                        <div class="card-inner relative w-full h-full transform-style-3d">
+                            <!-- 卡片背面 (奶龍印記) -->
+                            <div class="backface-hidden absolute inset-0 bg-gradient-to-br from-[#FFD23F] to-[#FF8C42] border-4 border-[#5A3A22] rounded-2xl flex flex-col items-center justify-center shadow-md">
+                                <span class="text-3xl sm:text-4xl">🥚</span>
+                                <span class="text-[10px] font-black text-[#5A3A22] mt-1">NAILONG</span>
+                            </div>
+                            <!-- 卡片正面 (圖案) -->
+                            <div class="backface-hidden rotate-y-180 absolute inset-0 bg-white border-4 border-[#5A3A22] rounded-2xl flex flex-col items-center justify-center shadow-md">
+                                <span class="text-3xl sm:text-5xl">${item.icon}</span>
+                                <span class="text-xs font-bold text-[#5A3A22] mt-1">${item.label}</span>
+                            </div>
+                        </div>
+                    `;
+                    card.addEventListener('click', () => this.flipCard(card));
+                    grid.appendChild(card);
+                });
+
+                this.timer = setInterval(() => {
+                    this.seconds++;
+                    document.getElementById('mem-time').textContent = this.seconds;
+                }, 1000);
+            },
+
+            flipCard(card) {
+                if (this.lockBoard) return;
+                const inner = card.querySelector('.card-inner');
+                if (inner.classList.contains('rotate-y-180')) return;
+
+                SoundSystem.playClick();
+                inner.classList.add('rotate-y-180');
+                this.flippedCards.push(card);
+                this.flips++;
+                document.getElementById('mem-flips').textContent = this.flips;
+
+                if (this.flippedCards.length === 2) {
+                    this.checkMatch();
+                }
+            },
+
+            checkMatch() {
+                this.lockBoard = true;
+                const [c1, c2] = this.flippedCards;
+                const isMatch = c1.dataset.id === c2.dataset.id;
+
+                if (isMatch) {
+                    SoundSystem.playCoin();
+                    this.matchedPairs++;
+                    this.flippedCards = [];
+                    this.lockBoard = false;
+
+                    if (this.matchedPairs === this.cardsData.length) {
+                        clearInterval(this.timer);
+                        SoundSystem.playWin();
+                        confetti({ particleCount: 100, spread: 80, origin: { y: 0.6 } });
+
+                        if (!ScoreManager.data.memoryBestFlips || this.flips < ScoreManager.data.memoryBestFlips) {
+                            ScoreManager.data.memoryBestFlips = this.flips;
+                            ScoreManager.save();
+                        }
+
+                        document.getElementById('memory-win-stats').textContent =
+                            `花費時間：${this.seconds} 秒 ｜ 總翻牌次數：${this.flips} 次`;
+                        document.getElementById('memory-win-banner').classList.remove('hidden');
+                    }
+                } else {
+                    setTimeout(() => {
+                        c1.querySelector('.card-inner').classList.remove('rotate-y-180');
+                        c2.querySelector('.card-inner').classList.remove('rotate-y-180');
+                        this.flippedCards = [];
+                        this.lockBoard = false;
+                    }, 750);
+                }
+            }
+        };
+
+        /**
+         * ==================== 遊戲 4：奶龍餵食挑戰引擎 ====================
+         */
+        const FeedGame = {
+            fullness: 50,
+            happiness: 60,
+            foods: [
+                { id: 'cake', emoji: '🍰', name: '草莓蛋糕', full: 15, happy: 20, mood: 'love', msg: '哇！草莓蛋糕甜甜的，奶龍幸福到冒愛心啦！💖' },
+                { id: 'burger', emoji: '🍔', name: '巨無霸漢堡', full: 25, happy: 15, mood: 'love', msg: '大口吃漢堡好滿足！肚肚變得圓滾滾的～😋' },
+                { id: 'icecream', emoji: '🍦', name: '香草甜筒', full: 10, happy: 18, mood: 'love', msg: '冰冰涼涼好好吃！奶龍最喜歡吃甜點了！✨' },
+                { id: 'chicken', emoji: '🍗', name: '香烤雞腿', full: 22, happy: 16, mood: 'love', msg: '啃雞腿最開心了！卡滋卡滋真美味！🤤' },
+                { id: 'broccoli', emoji: '🥦', name: '水煮花椰菜', full: 15, happy: -5, mood: 'normal', msg: '雖然是健康的蔬菜...但奶龍更想吃肉肉跟蛋糕啦～😅' },
+                { id: 'chili', emoji: '🌶️', name: '魔鬼朝天椒', full: 5, happy: -15, mood: 'spicy', msg: '噴火啦！！好辣好辣，快給我喝水！！🔥🥵' }
+            ],
+
+            init() {
+                const menu = document.getElementById('food-menu');
+                menu.innerHTML = '';
+
+                this.foods.forEach(food => {
+                    const item = document.createElement('div');
+                    item.className = 'food-item bg-white border-3 border-[#5A3A22] rounded-2xl p-3 flex flex-col items-center justify-center shadow-sm hover:bg-[#FFF8D6] select-none';
+                    item.draggable = true;
+                    item.innerHTML = `
+                        <span class="text-3xl sm:text-4xl mb-1 pointer-events-none">${food.emoji}</span>
+                        <span class="text-xs font-black text-[#5A3A22] pointer-events-none">${food.name}</span>
+                    `;
+
+                    // 桌面端 HTML5 Drag & Drop
+                    item.addEventListener('dragstart', (e) => {
+                        e.dataTransfer.setData('text/plain', food.id);
+                    });
+
+                    // 點擊直接餵食 (兼顧手機與快速操作)
+                    item.addEventListener('click', () => this.feed(food));
+
+                    // 手機端觸控拖曳模擬
+                    item.addEventListener('touchend', (e) => {
+                        const touch = e.changedTouches[0];
+                        const dropZone = document.getElementById('feed-drop-zone').getBoundingClientRect();
+                        if (
+                            touch.clientX >= dropZone.left &&
+                            touch.clientX <= dropZone.right &&
+                            touch.clientY >= dropZone.top &&
+                            touch.clientY <= dropZone.bottom
+                        ) {
+                            this.feed(food);
+                        }
+                    });
+
+                    menu.appendChild(item);
+                });
+
+                // 設置放置目標區事件
+                const dropZone = document.getElementById('feed-drop-zone');
+                dropZone.ondragover = (e) => {
+                    e.preventDefault();
+                    dropZone.classList.add('bg-[#FFD23F]/40');
+                };
+                dropZone.ondragleave = () => {
+                    dropZone.classList.remove('bg-[#FFD23F]/40');
+                };
+                dropZone.ondrop = (e) => {
+                    e.preventDefault();
+                    dropZone.classList.remove('bg-[#FFD23F]/40');
+                    const foodId = e.dataTransfer.getData('text/plain');
+                    const food = this.foods.find(f => f.id === foodId);
+                    if (food) this.feed(food);
+                };
+
+                this.updateBars();
+            },
+
+            feed(food) {
+                this.fullness = Math.max(0, Math.min(100, this.fullness + food.full));
+                this.happiness = Math.max(0, Math.min(100, this.happiness + food.happy));
+                this.updateBars();
+
+                // 累計餵食次數紀錄
+                ScoreManager.data.feedCount++;
+                ScoreManager.save();
+
+                // 更新對話氣泡與表情
+                const bubble = document.getElementById('feed-reaction-bubble');
+                const avatar = document.getElementById('feed-nailong-avatar');
+                bubble.textContent = food.msg;
+
+                document.getElementById('feed-face-normal').classList.add('hidden');
+                document.getElementById('feed-face-love').classList.add('hidden');
+                document.getElementById('feed-face-spicy').classList.add('hidden');
+
+                if (food.mood === 'love') {
+                    document.getElementById('feed-face-love').classList.remove('hidden');
+                    SoundSystem.playBonus();
+                } else if (food.mood === 'spicy') {
+                    document.getElementById('feed-face-spicy').classList.remove('hidden');
+                    SoundSystem.playHurt();
+                } else {
+                    document.getElementById('feed-face-normal').classList.remove('hidden');
+                    SoundSystem.playClick();
+                }
+
+                // 彈跳動畫
+                avatar.classList.remove('animate-jump-cute');
+                void avatar.offsetWidth;
+                avatar.classList.add('animate-jump-cute');
+
+                // 雙滿分慶祝
+                if (this.fullness === 100 && this.happiness === 100) {
+                    bubble.textContent = '🎉 哇！飽食度與開心度都 100% 滿分啦！奶龍超級愛你！💛';
+                    SoundSystem.playWin();
+                    confetti({ particleCount: 90, spread: 70, origin: { y: 0.6 } });
+                }
+            },
+
+            updateBars() {
+                document.getElementById('feed-fullness-text').textContent = `${this.fullness} / 100`;
+                document.getElementById('feed-fullness-bar').style.width = `${this.fullness}%`;
+
+                document.getElementById('feed-happy-text').textContent = `${this.happiness} / 100`;
+                document.getElementById('feed-happy-bar').style.width = `${this.happiness}%`;
+            },
+
+            reset() {
+                SoundSystem.playClick();
+                this.fullness = 50;
+                this.happiness = 60;
+                this.updateBars();
+                document.getElementById('feed-reaction-bubble').textContent = '肚子又空空啦～快餵我吃好料吧！🤤';
+                document.getElementById('feed-face-normal').classList.remove('hidden');
+                document.getElementById('feed-face-love').classList.add('hidden');
+                document.getElementById('feed-face-spicy').classList.add('hidden');
+            }
+        };
+
+        /**
+         * 5. 網站初始化與視窗大小自適應
+         */
+        window.onload = function () {
+            ScoreManager.load();
+            window.addEventListener('resize', () => {
+                if (!document.getElementById('view-game-catch').classList.contains('hidden')) {
+                    CatchGame.resizeCanvas();
+                }
+                if (!document.getElementById('view-game-jump').classList.contains('hidden')) {
+                    JumpGame.resizeCanvas();
+                }
+            });
+        };
+    </script>
+</body>
+</html>
